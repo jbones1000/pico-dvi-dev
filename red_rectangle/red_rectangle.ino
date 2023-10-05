@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <PicoDVI.h>
-#include <Fonts/FreeSansBold18pt7b.h> // A custom font
+// move a rectangle to the right
 
 DVIGFX16 display(DVI_RES_320x240p60, adafruit_feather_dvi_cfg);
 
@@ -16,9 +16,12 @@ DVIGFX16 display(DVI_RES_320x240p60, adafruit_feather_dvi_cfg);
 #define YELLOW   0xFFE0 
 #define WHITE    0xFFFF
 
-// global variable
+// global variables
 int w;
 int h;
+int count;
+int bigCount;
+
 
 // setup
 void setup() { 
@@ -26,18 +29,31 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     for (;;) digitalWrite(LED_BUILTIN, (millis() / 500) & 1);
   }
-
+  display.setColor(255, 0xFFFF); // Last palette entry = white
+  display.swap(false, true); // Duplicate same palette into front & back buffers
+  count = 0;
+  bigCount = 0;
   w = display.width();
   h = display.height();
-
-
 }
 
 // draw loop
 void loop() {
-  //display.fillCircle(w/2, h/2, 65, MAGENTA);
-  display.fillScreen(0);
-  display.drawRect(100, 100, 50, 50, RED);
-  
-  
+  // count loop
+  if( count == 145 ) {
+    count = 0;
+    bigCount++;
+  } else {
+    count++;
+  }
+
+  if( bigCount == w ) {
+    bigCount = 0;
+  }
+  moveRect();
+}
+
+void moveRect() {
+    display.fillScreen(0);
+    display.drawRect(bigCount, h/2, 60, 60, RED);
 }
