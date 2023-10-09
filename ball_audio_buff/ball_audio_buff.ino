@@ -10,12 +10,20 @@ int16_t w,h;
 int16_t counter, bigCount;
 float speed;
 int8_t dir; 
+float audioBuff[10];
+bool persist;
+
+int pin1 = A0;
+int pin2 = A1;
+int pin3 = A2;
+int pin4 = A3;
 
 
+int raw_audIn = 0;  // variable to store the value read
+int raw_k1 = 0;
+int raw_k2 = 0;
+int raw_k3 = 0;
 
-int analogPin = A0; // potentiometer wiper (middle terminal) connected to analog pin 3
-                    // outside leads to ground and +5V
-int val = 0;  // variable to store the value read
 
 // colors
 #define BLACK    0x0000
@@ -44,22 +52,40 @@ void setup() { // Runs once on startup
 }
 
 void loop() {
-  val = analogRead(analogPin);  // read the input pin
-  //Serial.println(val);          // debug value
-  //float scale = (float)val / 1023.0;
-  float moveY = scale_audioIn(val,h,0);
+  raw_audIn = analogRead( pin1 );  // read the input pin for the audio
+  raw_k1 = analogRead( pin2 );  // read the input pin pot 1
+  raw_k2 = analogRead( pin3 );  // read the input pin pot 2
+  raw_k3 = analogRead( pin4 );  // read the input pin pot 3
 
+  //Serial.println(val);          // debug value
+  counter++;
+  if(counter>10){
+    counter = 0;
+    if(persist==true){
+      persist = false;
+    } else {
+      persist = true;
+    }
+  } 
+  for(int i=0; i<10; i++) {
+    audioBuff[i] = scale_analogIn(raw_audIn,1,0);
+  }
+  //audioBuff[counter] = scale_analogIn(raw_audIn,1,0);
+  int red = scale_analogIn(raw_k1,255,0);
+  int green = scale_analogIn(raw_k2,255,0);
+  int blue = scale_analogIn(raw_k3,255,0);
   
   // Clear back framebuffer and draw circle
-  display.fillScreen(0);
-  display.setColor(1, color_mixer(200,2,200));
-  display.setColor(2, color_mixer(200,200,200));
-  display.setColor(3, color_mixer(10,250,100));
-  
 
-  display.fillCircle(10, moveY, 20, 1);
-  display.fillCircle(w/2, moveY, 20, 2);
-  display.fillCircle(w-10, moveY, 20, 3);
+  display.fillScreen(0);
+  display.setColor(1, color_mixer(red,green,blue) );
+  
+  // draw three circles
+  display.fillCircle(10, audioBuff[0]*h, 20, 1);
+  display.fillCircle(w/2, audioBuff[178]*h, 20, 1);
+  display.fillCircle(w-10, audioBuff[255]*h, 20, 1);
+
+  display.drawLine(0,h/2,w,h/2,1);
   
   // Swap front/back buffers, do not duplicate current screen state to next frame,
   // we'll draw it new from scratch each time.
@@ -71,8 +97,11 @@ uint16_t color_mixer(int int_r, int int_g, int int_b) {
   return mixed;
 }
 
-float scale_audioIn(int audio, int size, int min) {
+float scale_analogIn(int audio, int size, int min) {
   float scale = (float)audio / 1023.0;
   return (scale*size) + min;
 }
+
+
+
 
